@@ -30,7 +30,7 @@ $map = [
 function load($spreadsheetId, $map) {	
 	$f = fopen("https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv", 'r');
 	if ($f === false) {
-		throw new Exception();
+		throw new Exception("Could not fetch spreadsheet");
 	}
 
 	$header = true;
