@@ -178,7 +178,7 @@ $stations = cache("./cache.php", 5 * 60, "Stations", function() {
 				content += "<div class='clearfix loadings'>"
 				for (var t in typeMap) {
 					var value = item[t]
-					if (!!value) {
+					if (!value) {
 						continue
 					}
 					var valueClass = typeValueMap[value];
