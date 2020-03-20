@@ -61,7 +61,7 @@ function load($spreadsheetId, $map) {
 			$row[$columns[$c]] = $line[$i];
 		}
 		array_push($rows, $row);
-	} while(true);
+    } while(true);
 	return $rows;
 }
 
