@@ -1,4 +1,73 @@
-<!DOCTYPE html>
+<?php
+
+$spreadsheetId = "1RT-A_TRlVq0oAndW0vgge0i_Te4KgFAIY_QHwqruMnc";
+
+$map = [
+    "ID" => "id",
+    "Město" => "city",
+    "Název" => "name",
+    "Adresa" => "address",
+    "PSČ" => "zip",
+    "Web" => "web",
+    "email" => "email",
+    "Telefon" => "telephone",
+
+    "Šířka" => "lat",
+    "Délka" => "lon",
+
+    "Stav 0 Negative" => "blood_0_neg",
+    "Stav 0 Positive" => "blood_0_pos",
+    "Stav B Negative" => "blood_b_neg",
+    "Stav B Positive" => "blood_b_pos",
+    "Stav A Negative" => "blood_a_neg",
+    "Stav A Positive" => "blood_a_pos",
+    "Stav AB Negative" => "blood_ab_neg",
+    "Stav AB Positive" => "blood_ab_pos",
+
+    "Last Modified" => "last_modified",
+];
+
+function load($spreadsheetId, $map) {	
+	$f = fopen("https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv", 'r');
+	if ($f === false) {
+		throw new Exception();
+	}
+
+	$header = true;
+	$columns = [];
+	$indexes = [];
+	$rows = [];
+	do {
+		$line = fgetcsv($f);
+		if ($line === false) {
+			break;
+		}
+
+		if ($header) {
+			// map columns names to indexes
+			foreach ($line as $index => $value) {
+				if (isset($map[$value])) {
+					array_push($columns, $map[$value]);
+					array_push($indexes, $index);
+				}
+			}
+			$header = false;
+			continue;
+		}
+
+		// extract row from indexed columns
+		$row = [];
+		foreach ($indexes as $c => $i) {
+			$row[$columns[$c]] = $line[$i];
+		}
+		array_push($rows, $row);
+	} while(true);
+	return $rows;
+}
+
+$stations = load($spreadsheetId, $map);
+
+?><!DOCTYPE html>
 <html lang="cs">
 <head>
 	<title>Daruju Krev - Staňte se super-hrdinou</title>
@@ -30,33 +99,65 @@
 			m.addLayer(layer);
 			layer.enable();
 
-			//Tady je začátek tvoření bodu na mapě. Tedy tady bude začátek for loopu
-
-			var card = new SMap.Card();
-
-			card.getHeader().classList.add("clearfix");
-
-			//Tady dochází k vytvoření popupu s daty - záhlaví (název, adresa, CTA - zavolá na telefon, proklik na web):
-
-			card.getHeader().innerHTML = "<div class='clearfix'><img class='hto' src='images/hto.svg'><div class='algn'><h1 class='hto-heading'>HTO Praha 6</h1><h2 class='hto-adress'>Adresa 1<br>000 01<br>Praha</h2></div></div><div class='clearfix'><p class='call'>Objednat se</p><div class='link-bg'><img src='images/link.svg' class='link'></div></div>";
-
-			//Tady dochází k vytvoření barometru. Zatím dva řádky:
-
-			card.getHeader().innerHTML += "<div class='clearfix loadings'><div class='clearfix'><p class='b-type'>A+</p><div class='b-load'><div class='b-state b-come'></div></div></div><div class='clearfix'><p class='b-type'>A-</p><div class='b-load'><div class='b-state b-empty'></div></div></div></div>";
-
-			//Titulek bodu na mapě. Asi název HTO:
-
-			var options = { 
-			    title: "HTO Praha"
+			var typeMap = {
+    			"blood_a_pos": "A+",
+    			"blood_a_neg": "A-",
+    			"blood_b_pos": "B+",
+    			"blood_b_neg": "B-",
+    			"blood_ab_pos": "AB+",
+    			"blood_ab_neg": "AB-",
+    			"blood_0_pos": "0+",
+    			"blood_0_neg": "0-"
 			};
+			var typeValueMap = {
+				"mame" : "b-full",
+				"potrebujeme": "b-come",
+				"akutni": "b-empty"
+			}
+			var stations = <?php echo json_encode($stations) ?>;
 
-			//Vytvoření samotného bodu, na který je uchycen popup: ("Benešov je ID, to je třeba udělat unikátní a samozřejmě tam přijde ID HTO/nemocnice"):
+			for (var x = 0; x < stations.length; x++) {
+				item = stations[x];
 
-			var marker = new SMap.Marker(SMap.Coords.fromWGS84(14.6791711, 49.7861753), "Benešov", options);
-			marker.decorate(SMap.Marker.Feature.Card, card);
-			layer.addMarker(marker);
+				var card = new SMap.Card();
 
-			//Tady je konec tvoření bodu na mapě. Tedy tady bude konec for loopu
+				card.getHeader().classList.add("clearfix");
+
+				var content = "<div class='clearfix'>\
+					<img class='hto' src='images/hto.svg'>\
+						<div class='algn'>\
+							<h1 class='hto-heading'>" + item.name + "</h1>\
+							<h2 class='hto-adress'>" + item.address + "<br>" + item.zip + "<br>" + item.city + "</h2>\
+						</div>\
+					</div>\
+					<div class='clearfix'>\
+						<a href=\"tel:" + item.telephone + "\" class='call'>Objednat se</p>\
+						<a href=\"" + item.web + "\" class='link-bg'><img src='images/link.svg' class='link'></a>\
+					</div>";
+
+				content += "<div class='clearfix loadings'>"
+				for (var t in typeMap) {
+					var value = item[t]
+					if (!!value) {
+						continue
+					}
+					var valueClass = typeValueMap[value];
+					var label = typeMap[t];
+					content += "<div class='clearfix'><p class='b-type'>" + label + "</p><div class='b-load'><div class='b-state " + valueClass + "'></div></div></div>"
+				}
+				content += "</div>";
+
+				card.getHeader().innerHTML = content;
+
+				var options = { 
+					title: item.name
+				};
+
+				console.log(item);
+				var marker = new SMap.Marker(SMap.Coords.fromWGS84(item.lon, item.lat), item.id, options);
+				marker.decorate(SMap.Marker.Feature.Card, card);
+				layer.addMarker(marker);
+			}
 
 			var options = {
 				enableHighAccuracy: true,
