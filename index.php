@@ -65,7 +65,47 @@ function load($spreadsheetId, $map) {
 	return $rows;
 }
 
-$stations = load($spreadsheetId, $map);
+function cache($filename, $ttl, $header, $callback) {
+	$storage = [
+        'timestamp' => time(),
+        'data' => null,
+    ];
+
+	if (file_exists($filename)) {
+		$storage = @include $filename;
+    }
+
+    if (isset($storage['timestamp']) && time() < $storage['timestamp'] + $ttl && $storage['data'] !== null) {
+        header("X-${header}-Cache-Time: ${storage['timestamp']}");
+        header("X-${header}-Cache: cached");
+        return $storage['data'];
+    }
+
+    try {
+        $storage['data'] = $callback();
+        $storage['timestamp'] = time();
+        file_put_contents($filename, '<?php return ' . var_export($storage, true) . ';');
+        header("X-${header}-Cache: fetched");
+        return $storage['data'];
+
+    } catch (Exception $e) {
+        header("X-${header}-Cache: expired");
+        return $storage['data'];
+    }
+}
+
+$stations = cache("./cache.php", 5 * 60, "Stations", function() {
+    global $map, $spreadsheetId;
+
+    $rows = load($spreadsheetId, $map);
+
+    // force expired cache if there is significant data loss
+    if (count($rows) < 60) {        
+        throw new Exception("Expected at least 60 items");
+    }
+
+    return $rows;
+});
 
 ?><!DOCTYPE html>
 <html lang="cs">
