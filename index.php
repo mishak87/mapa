@@ -131,7 +131,7 @@ $stations = load($spreadsheetId, $map);
 						</div>\
 					</div>\
 					<div class='clearfix'>\
-						<a href=\"tel:" + item.telephone + "\" class='call'>Objednat se</p>\
+						<a href=\"tel:" + item.telephone + "\" class='call'>Objednat se</a>\
 						<a href=\"" + item.web + "\" class='link-bg'><img src='images/link.svg' class='link'></a>\
 					</div>";
 
