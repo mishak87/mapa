@@ -153,7 +153,6 @@ $stations = load($spreadsheetId, $map);
 					title: item.name
 				};
 
-				console.log(item);
 				var marker = new SMap.Marker(SMap.Coords.fromWGS84(item.lon, item.lat), item.id, options);
 				marker.decorate(SMap.Marker.Feature.Card, card);
 				layer.addMarker(marker);
