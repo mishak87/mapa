@@ -149,6 +149,7 @@ $stations = cache("./cache.php", 5 * 60, "Stations", function() {
     			"blood_0_pos": "0+",
     			"blood_0_neg": "0-"
 			};
+			var defaultTypeValue = "mame";
 			var typeValueMap = {
 				"mame" : "b-full",
 				"potrebujeme": "b-come",
@@ -177,10 +178,7 @@ $stations = cache("./cache.php", 5 * 60, "Stations", function() {
 
 				content += "<div class='clearfix loadings'>"
 				for (var t in typeMap) {
-					var value = item[t]
-					if (!value) {
-						continue
-					}
+					var value = item[t] || defaultTypeValue;
 					var valueClass = typeValueMap[value];
 					var label = typeMap[t];
 					content += "<div class='clearfix'><p class='b-type'>" + label + "</p><div class='b-load'><div class='b-state " + valueClass + "'></div></div></div>"
