@@ -176,14 +176,20 @@ $stations = cache("./cache.php", 5 * 60, "Stations", function() {
 						<a href=\"" + item.web + "\" class='link-bg'><img src='images/link.svg' class='link'></a>\
 					</div>";
 
-				content += "<div class='clearfix loadings'>"
+				semafor = ""
+				semaforAny = false;
 				for (var t in typeMap) {
+					semaforAny = semaforAny || !!item[t]
 					var value = item[t] || defaultTypeValue;
 					var valueClass = typeValueMap[value];
 					var label = typeMap[t];
-					content += "<div class='clearfix'><p class='b-type'>" + label + "</p><div class='b-load'><div class='b-state " + valueClass + "'></div></div></div>"
+					semafor += "<div class='clearfix'><p class='b-type'>" + label + "</p><div class='b-load'><div class='b-state " + valueClass + "'></div></div></div>"
 				}
-				content += "</div>";
+				if (semaforAny) {
+					content += "<div class='clearfix loadings'>"
+					content += semafor
+					content += "</div>";
+				}
 
 				card.getHeader().innerHTML = content;
 
